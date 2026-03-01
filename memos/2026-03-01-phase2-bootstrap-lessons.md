@@ -41,6 +41,22 @@ This memo captures the failures and corrections encountered while moving PulseCa
    - Root cause: ElastiCache was provisioned with transit encryption, but the app still used plain Redis clients.
    - Fix: add `REDIS_TLS_ENABLED=true` support in `orders` and `worker`, then wire that into Kubernetes manifests.
 
+9. Mutable dev tags did not reliably refresh running pods
+   - Root cause: Kubernetes deployments used mutable `*-develop` tags with `imagePullPolicy: IfNotPresent`, so new builds were not guaranteed to be pulled.
+   - Fix: set `imagePullPolicy: Always` for the dev manifests that track mutable branch tags.
+
+10. Database URL construction failed on special-character passwords
+   - Root cause: the RDS managed password contained shell- and URL-sensitive characters, and manual secret creation introduced malformed connection strings.
+   - Fix: stop manual copy/paste, URL-encode the password, and build the final `DATABASE_URL` programmatically.
+
+11. DNS and TLS testing can fail even when the ALB is healthy
+   - Root cause: the ALB was live before Route 53 was wired, and the certificate matched the custom hostname rather than the raw ALB hostname.
+   - Fix: test with the ALB hostname plus the intended `Host` header (or complete the Route 53 ALIAS step).
+
+12. The public order payload and the service schema drifted apart
+   - Root cause: the deployed API examples used `quantity` and `unit_price`, while the `orders` service still decoded only `qty` and `price_cents`.
+   - Fix: make the service accept both field shapes, then add item validation so zero-value items are rejected instead of producing broken downstream events.
+
 ## What Was Learned
 
 1. Managed services create contract changes, not just endpoint changes
@@ -55,10 +71,19 @@ This memo captures the failures and corrections encountered while moving PulseCa
 4. Secret safety must be designed before deployment speed
    - The right time to remove plaintext credentials is before the repo learns bad habits, not after.
 
+5. Mutable infrastructure and mutable image tags need explicit rollout behavior
+   - If a system depends on mutable references in dev, the operational defaults must force refreshes instead of assuming cache invalidation.
+
+6. Managed credentials are safer, but they shift complexity into encoding and delivery
+   - Moving the password out of git is correct, but application-facing formats still need careful construction.
+
+7. Contract drift across service boundaries is easy to miss until the async path is exercised
+   - A request can still return `201` while emitting an invalid downstream event if field mapping and validation are not aligned.
+
 ## Remaining Gaps
 
 1. RDS password still needs a platform-side secret sync path into Kubernetes.
-2. The app still uses mutable `*-develop` tags; that is acceptable for dev but not a final rollout strategy.
+2. The app still uses mutable `*-develop` tags; that is acceptable for dev but not a final rollout strategy even with `imagePullPolicy: Always`.
 3. ArgoCD is scaffolded but not yet the active control plane for the cluster.
 4. External DNS / final Route 53 ALIAS automation is still pending.
 
