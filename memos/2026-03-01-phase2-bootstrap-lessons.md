@@ -47,7 +47,7 @@ This memo captures the failures and corrections encountered while moving PulseCa
 
 10. Database URL construction failed on special-character passwords
    - Root cause: the RDS managed password contained shell- and URL-sensitive characters, and manual secret creation introduced malformed connection strings.
-   - Fix: stop manual copy/paste, URL-encode the password, and build the final `DATABASE_URL` programmatically.
+   - Fix: stop manual copy/paste, split the DB config into discrete `DB_*` values, and let the app build the final DSN safely in code.
 
 11. DNS and TLS testing can fail even when the ALB is healthy
    - Root cause: the ALB was live before Route 53 was wired, and the certificate matched the custom hostname rather than the raw ALB hostname.
@@ -56,6 +56,14 @@ This memo captures the failures and corrections encountered while moving PulseCa
 12. The public order payload and the service schema drifted apart
    - Root cause: the deployed API examples used `quantity` and `unit_price`, while the `orders` service still decoded only `qty` and `price_cents`.
    - Fix: make the service accept both field shapes, then add item validation so zero-value items are rejected instead of producing broken downstream events.
+
+13. DNS automation arrives after ingress, not before it
+   - Root cause: the Route 53 ALIAS depends on an ALB that only exists after the AWS Load Balancer Controller reconciles the ingress.
+   - Fix: do one manual ALIAS bootstrap first, then install `external-dns` as the long-term reconciliation path.
+
+14. Shell metacharacters created false infrastructure failures
+   - Root cause: zsh interpreted `!` in Secrets Manager ARNs and `[]` in Helm `--set` expressions before the command ever reached AWS or Helm.
+   - Fix: quote shell-sensitive values aggressively and prefer file-based JSON or YAML over fragile inline shell strings.
 
 ## What Was Learned
 
@@ -74,21 +82,24 @@ This memo captures the failures and corrections encountered while moving PulseCa
 5. Mutable infrastructure and mutable image tags need explicit rollout behavior
    - If a system depends on mutable references in dev, the operational defaults must force refreshes instead of assuming cache invalidation.
 
-6. Managed credentials are safer, but they shift complexity into encoding and delivery
-   - Moving the password out of git is correct, but application-facing formats still need careful construction.
+6. Managed credentials are safer, but they shift complexity into application-facing contracts
+   - Moving the password out of git is correct, but the clean fix is to sync raw secrets and compose connection details in code rather than baking fragile URLs into manifests.
 
 7. Contract drift across service boundaries is easy to miss until the async path is exercised
    - A request can still return `201` while emitting an invalid downstream event if field mapping and validation are not aligned.
 
+8. Some automation naturally has to land in a second pass
+   - DNS automation depends on live load balancer resources, so it is normal to bootstrap it manually once and then hand it off to a controller.
+
 ## Remaining Gaps
 
-1. RDS password still needs a platform-side secret sync path into Kubernetes.
+1. `external-secrets` is scaffolded but not yet the active secret sync path in the cluster.
 2. The app still uses mutable `*-develop` tags; that is acceptable for dev but not a final rollout strategy even with `imagePullPolicy: Always`.
 3. ArgoCD is scaffolded but not yet the active control plane for the cluster.
-4. External DNS / final Route 53 ALIAS automation is still pending.
+4. `external-dns` is installed, but the record should still be validated under controller ownership rather than relying on the original manual bootstrap.
 
 ## Next Phase 2 Focus
 
 1. Stabilize the first successful in-cluster workload deployment.
-2. Replace manual secret handling with a real synchronization path.
+2. Activate and validate `external-secrets` as the real secret synchronization path.
 3. Move from direct `kubectl` bootstrap into GitOps-managed reconciliation.
