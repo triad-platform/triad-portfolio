@@ -53,6 +53,10 @@ This memo captures the failures and corrections encountered while moving PulseCa
    - Root cause: the ALB was live before Route 53 was wired, and the certificate matched the custom hostname rather than the raw ALB hostname.
    - Fix: test with the ALB hostname plus the intended `Host` header (or complete the Route 53 ALIAS step).
 
+12. The public order payload and the service schema drifted apart
+   - Root cause: the deployed API examples used `quantity` and `unit_price`, while the `orders` service still decoded only `qty` and `price_cents`.
+   - Fix: make the service accept both field shapes, then add item validation so zero-value items are rejected instead of producing broken downstream events.
+
 ## What Was Learned
 
 1. Managed services create contract changes, not just endpoint changes
@@ -72,6 +76,9 @@ This memo captures the failures and corrections encountered while moving PulseCa
 
 6. Managed credentials are safer, but they shift complexity into encoding and delivery
    - Moving the password out of git is correct, but application-facing formats still need careful construction.
+
+7. Contract drift across service boundaries is easy to miss until the async path is exercised
+   - A request can still return `201` while emitting an invalid downstream event if field mapping and validation are not aligned.
 
 ## Remaining Gaps
 
