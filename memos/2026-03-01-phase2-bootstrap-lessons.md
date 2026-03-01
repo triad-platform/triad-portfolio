@@ -65,6 +65,10 @@ This memo captures the failures and corrections encountered while moving PulseCa
    - Root cause: zsh interpreted `!` in Secrets Manager ARNs and `[]` in Helm `--set` expressions before the command ever reached AWS or Helm.
    - Fix: quote shell-sensitive values aggressively and prefer file-based JSON or YAML over fragile inline shell strings.
 
+15. CI writing deploy state back into the app branch created the wrong ownership model
+   - Root cause: letting the app build workflow commit image promotions back into `triad-app/develop` created avoidable rebase churn and mixed source changes with environment state.
+   - Fix: move the live image pins into the GitOps repo, and let the app workflow update that platform-owned overlay instead.
+
 ## What Was Learned
 
 1. Managed services create contract changes, not just endpoint changes
@@ -91,15 +95,17 @@ This memo captures the failures and corrections encountered while moving PulseCa
 8. Some automation naturally has to land in a second pass
    - DNS automation depends on live load balancer resources, so it is normal to bootstrap it manually once and then hand it off to a controller.
 
+9. Source repos and deploy-state repos should not share the same mutation path
+   - Build pipelines should publish artifacts, then update the GitOps source of truth, not rewrite the application source branch just to trigger deployment.
+
 ## Remaining Gaps
 
-1. `external-secrets` is scaffolded but not yet the active secret sync path in the cluster.
-2. The app still uses mutable `*-develop` tags; that is acceptable for dev but not a final rollout strategy even with `imagePullPolicy: Always`.
-3. ArgoCD is scaffolded but not yet the active control plane for the cluster.
-4. `external-dns` is installed, but the record should still be validated under controller ownership rather than relying on the original manual bootstrap.
+1. The new GitOps image-overlay flow should be validated end-to-end once to confirm the app build updates `triad-kubernetes-platform` cleanly and Argo reconciles the resulting digest pin.
+2. The app still uses mutable `*-develop` tags as source defaults; that is acceptable for dev, but the live cluster should continue converging on digest-pinned refs from the platform overlay.
+3. The current cloud smoke verifies the public request contract, but it still does not assert the async success path from outside the cluster.
 
 ## Next Phase 2 Focus
 
-1. Stabilize the first successful in-cluster workload deployment.
-2. Activate and validate `external-secrets` as the real secret synchronization path.
-3. Move from direct `kubectl` bootstrap into GitOps-managed reconciliation.
+1. Validate the new source-repo -> GitOps-overlay -> ArgoCD promotion path under real CI.
+2. Keep the dev cluster converging on digest-pinned workload refs from the platform overlay.
+3. Extend the cloud smoke path so it can assert async success, not just `201/409`.
