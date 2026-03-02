@@ -19,6 +19,7 @@ SLOs, error budgets, incident response, postmortems, and runbooks.
   - `worker`
 - The dev cluster now mirrors these starter artifacts into the live observability baseline in `triad-kubernetes-platform/platform/observability`.
 - The live dev baseline now includes a PVC-backed Prometheus/Grafana pair plus Alertmanager so dashboards and alert routing survive normal pod churn.
+- The remaining bootstrap credentials and receiver target are now secret-backed, even though they still need real values substituted after first sync.
 - Thresholds are intentionally conservative starter defaults and should be tuned from observed baseline behavior.
 - Strategy rationale is documented in:
   - `../adrs/001-adr-phase1-observability-incremental.md`
