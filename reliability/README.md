@@ -17,6 +17,7 @@ SLOs, error budgets, incident response, postmortems, and runbooks.
   - `api-gateway`
   - `orders`
   - `worker`
+- The dev cluster now mirrors these starter artifacts into the live observability baseline in `triad-kubernetes-platform/platform/observability`.
 - Thresholds are intentionally conservative starter defaults and should be tuned from observed baseline behavior.
 - Strategy rationale is documented in:
   - `../adrs/001-adr-phase1-observability-incremental.md`
