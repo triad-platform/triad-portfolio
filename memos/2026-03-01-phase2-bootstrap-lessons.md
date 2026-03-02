@@ -69,6 +69,30 @@ This memo captures the failures and corrections encountered while moving PulseCa
    - Root cause: letting the app build workflow commit image promotions back into `triad-app/develop` created avoidable rebase churn and mixed source changes with environment state.
    - Fix: move the live image pins into the GitOps repo, and let the app workflow update that platform-owned overlay instead.
 
+16. Kustomize image digest promotion initially updated only metadata, not live image pins
+   - Root cause: the first GitOps overlay mutation logic updated the source-revision comment but failed to rewrite the `images:` entries from `newTag:` to `digest:`.
+   - Fix: replace the brittle substitution logic with a deterministic updater that rewrites the exact image block and verifies the overlay contains `digest: sha256:...`.
+
+17. Argo can report healthy while still serving the old rollout
+   - Root cause: a bad bootstrap image reference caused new pods to fail image pulls while the previous healthy ReplicaSet continued serving traffic, allowing smoke tests to pass against the old pods.
+   - Fix: seed the GitOps overlay with valid bootstrap tags first, then let the next promotion replace them with immutable digests.
+
+18. Stateful observability exposed hidden node-capacity constraints
+   - Root cause: once Prometheus, Grafana, and Alertmanager were added, the two-node cluster hit the Kubernetes per-node pod-density limit and new workloads stayed pending.
+   - Fix: increase the EKS managed node group capacity to three nodes and treat the larger floor as the new dev baseline.
+
+19. Storage was blocked first by scheduling, then by permissions
+   - Root cause: `WaitForFirstConsumer` kept PVCs pending until pods could schedule, and once the EBS volumes attached, Prometheus and Grafana still failed because their data directories were not writable on fresh volumes.
+   - Fix: resolve scheduler capacity first, then add explicit non-root security contexts and `fsGroup` values so the mounted volumes are writable.
+
+20. External Secrets migration failed until IAM matched the real secret ARNs
+   - Root cause: the IRSA role for `external-secrets` did not have `GetSecretValue` permission on the actual observability secrets, so the merge-based migration left the bootstrap values in place.
+   - Fix: grant the role access to the concrete secret ARN patterns and then force a resync so the AWS-backed values overwrite the bootstrap placeholders safely.
+
+21. Deployment patching can fail on union-style volume sources
+   - Root cause: changing `alertmanager-config` from a `configMap` volume to a `secret` volume created a Kubernetes patching edge case where the live object could retain stale fields.
+   - Fix: use the correct `secret.secretName` schema in the manifest and be prepared to recreate the Deployment when changing union-style fields so the live object is rebuilt from clean desired state.
+
 ## What Was Learned
 
 1. Managed services create contract changes, not just endpoint changes
@@ -98,14 +122,23 @@ This memo captures the failures and corrections encountered while moving PulseCa
 9. Source repos and deploy-state repos should not share the same mutation path
    - Build pipelines should publish artifacts, then update the GitOps source of truth, not rewrite the application source branch just to trigger deployment.
 
+10. Cluster bottlenecks often surface in layers
+   - The first visible failure may be pod scheduling, which then hides PVC binding behavior, which then hides application-level filesystem permission issues. Fixing Kubernetes systems reliably means resolving the first-order constraint before reading too much into the second-order errors.
+
+11. Safe secret migration is better than hard cutover
+   - Using `creationPolicy: Merge` let the platform keep running on bootstrap secrets while `external-secrets` and IAM were corrected. That made the migration noisy, but not destructive.
+
+12. Some Kubernetes object changes are easier to recreate than patch
+   - When changing fields that switch resource source types (for example, `configMap` to `secret` on a volume), a clean object recreation can be safer and more predictable than repeated patch attempts.
+
 ## Remaining Gaps
 
-1. The new GitOps image-overlay flow should be validated end-to-end once to confirm the app build updates `triad-kubernetes-platform` cleanly and Argo reconciles the resulting digest pin.
-2. The app still uses mutable `*-develop` tags as source defaults; that is acceptable for dev, but the live cluster should continue converging on digest-pinned refs from the platform overlay.
-3. The first cloud smoke only verified the public request contract. The next hardening step was adding a bounded dev diagnostics signal so smoke can assert the async worker and notifications path from outside the cluster too.
+1. Alertmanager still needs a final clean reconciliation after the volume-source change from `ConfigMap` to `Secret`; this is now a live-object replacement problem, not a design problem.
+2. Grafana and Alertmanager observability secrets should be fully externalized and verified end-to-end from Secrets Manager after the IRSA and sync path settles.
+3. The new three-node floor should be confirmed as the durable dev baseline under normal app and platform churn, not just during one observability rollout.
 
 ## Next Phase 2 Focus
 
-1. Validate the new source-repo -> GitOps-overlay -> ArgoCD promotion path under real CI.
-2. Keep the dev cluster converging on digest-pinned workload refs from the platform overlay.
-3. Keep the cloud smoke asserting async success, not just `201/409`, so request acceptance is not mistaken for workflow completion.
+1. Finish the Alertmanager reconciliation and validate the SNS -> email alert path end-to-end.
+2. Keep the dev cluster converging on digest-pinned workload refs from the platform overlay and verify the three-node floor is sufficient under normal operation.
+3. Close the remaining observability secret bootstrap gaps so AWS dev can be declared operationally reproducible before the Azure expansion begins.
