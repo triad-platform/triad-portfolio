@@ -102,10 +102,10 @@ This memo captures the failures and corrections encountered while moving PulseCa
 
 1. The new GitOps image-overlay flow should be validated end-to-end once to confirm the app build updates `triad-kubernetes-platform` cleanly and Argo reconciles the resulting digest pin.
 2. The app still uses mutable `*-develop` tags as source defaults; that is acceptable for dev, but the live cluster should continue converging on digest-pinned refs from the platform overlay.
-3. The current cloud smoke verifies the public request contract, but it still does not assert the async success path from outside the cluster.
+3. The first cloud smoke only verified the public request contract. The next hardening step was adding a bounded dev diagnostics signal so smoke can assert the async worker and notifications path from outside the cluster too.
 
 ## Next Phase 2 Focus
 
 1. Validate the new source-repo -> GitOps-overlay -> ArgoCD promotion path under real CI.
 2. Keep the dev cluster converging on digest-pinned workload refs from the platform overlay.
-3. Extend the cloud smoke path so it can assert async success, not just `201/409`.
+3. Keep the cloud smoke asserting async success, not just `201/409`, so request acceptance is not mistaken for workflow completion.
