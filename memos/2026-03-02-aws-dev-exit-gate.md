@@ -73,6 +73,18 @@ The AWS dev environment now meets the practical Azure entry gate:
 3. Move remaining bootstrap-only secrets and admin defaults fully out of repo-managed placeholders.
 4. Document teardown and re-create as a single repeatable operator runbook.
 
+## Cost Management Implication
+
+Because the AWS dev environment is now a reproducible baseline rather than a fragile one-off build, it can be treated as a parkable environment.
+
+That means:
+
+1. It is reasonable to scale down or tear down dev when it is not actively needed.
+2. Azure parity work does not require AWS dev to remain fully online at all times.
+3. Cost control can now be part of normal platform operations instead of something avoided out of fear of a painful rebuild.
+
+This does not mean the environment is fully zero-touch. It means the remaining manual work is now bounded enough that bringing it back is an operational task, not a rescue exercise.
+
 ## Azure Start Condition
 
 Azure work should mirror the AWS model as it exists now, not re-invent it:
