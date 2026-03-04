@@ -5,7 +5,7 @@ Status: Draft
 
 ## Purpose
 
-This memo records whether the AWS dev environment is ready to be treated as the reference baseline before Azure work begins.
+This memo records whether the AWS dev environment is ready to be treated as the reference baseline before Azure work begins and before GCP parity is attempted after Azure.
 
 ## What Is Proven
 
@@ -88,7 +88,7 @@ Because the AWS dev environment is now a reproducible baseline rather than a fra
 That means:
 
 1. It is reasonable to scale down or tear down dev when it is not actively needed.
-2. Azure parity work does not require AWS dev to remain fully online at all times.
+2. Azure and later GCP parity work do not require AWS dev to remain fully online at all times.
 3. Cost control can now be part of normal platform operations instead of something avoided out of fear of a painful rebuild.
 
 The preferred cost-saving boundary is:
@@ -101,13 +101,14 @@ That is the current operator-friendly parking model for dev.
 
 This does not mean the environment is fully zero-touch. It means the remaining manual work is now bounded enough that bringing it back is an operational task, not a rescue exercise.
 
-## Azure Start Condition
+## Multi-Cloud Start Condition
 
-Azure work should mirror the AWS model as it exists now, not re-invent it:
+Azure should mirror the AWS model first, and GCP should mirror the same operating model after Azure stabilizes:
 
 1. Landing zone first
 2. AKS second
 3. GitOps overlay and Argo reconciliation third
 4. Secret sync, observability, and alerting parity after that
+5. Repeat the same parity sequence for GCP and GKE after the Azure path is proven
 
 The goal is parity with the AWS operating model, not a different deployment model per cloud.
