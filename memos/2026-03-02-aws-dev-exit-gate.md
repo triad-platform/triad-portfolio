@@ -91,6 +91,14 @@ That means:
 2. Azure parity work does not require AWS dev to remain fully online at all times.
 3. Cost control can now be part of normal platform operations instead of something avoided out of fear of a painful rebuild.
 
+The preferred cost-saving boundary is:
+
+1. keep `triad-landing-zones` intact
+2. tear down only the EKS/platform layer
+3. rebuild the cluster and let Argo restore the in-cluster world
+
+That is the current operator-friendly parking model for dev.
+
 This does not mean the environment is fully zero-touch. It means the remaining manual work is now bounded enough that bringing it back is an operational task, not a rescue exercise.
 
 ## Azure Start Condition
