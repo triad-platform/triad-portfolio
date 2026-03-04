@@ -66,6 +66,14 @@ The AWS dev environment now meets the practical Azure entry gate:
 3. Observability and alerting are functional enough that troubleshooting no longer starts with ad hoc cluster forensics.
 4. Remaining manual steps are bootstrap/admin concerns, not repeated recovery steps in the normal delivery path.
 
+This does **not** mean the environment is already production-grade.
+
+It means:
+
+1. the dev operating model is strong enough to reproduce
+2. Azure can now mirror that operating model
+3. production-grade hardening is still a separate track after parity work begins
+
 ## Remaining Hardening Before Calling It "Zero-Touch"
 
 1. Automate ArgoCD first-install bootstrap.
