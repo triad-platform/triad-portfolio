@@ -12,3 +12,5 @@ Short, executive-friendly technical memos.
   - Explicit statement of what the AWS dev environment now proves, what still requires human bootstrap, and why that is sufficient to begin Azure parity work followed by GCP parity.
 - `2026-03-04-post-rebuild-missing-apps-crd-root-cause.md`
   - First-principles incident record for `OutOfSync/Missing` Argo child apps caused by missing `external-secrets` CRDs and the tested recovery sequence.
+- `2026-03-14-aws-rebuild-bootstrap-gaps.md`
+  - Record of the successful AWS rebuild after cost teardown, the `external-secrets` CRD bootstrap gap, the Kyverno-enforced workload label failure, and the final recovery path.
