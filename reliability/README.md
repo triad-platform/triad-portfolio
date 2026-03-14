@@ -10,6 +10,14 @@ SLOs, error budgets, incident response, postmortems, and runbooks.
   - Prometheus alert rule stubs aligned to current metrics.
 - `runbook-phase1.md`
   - Triage and mitigation playbook for the Phase 1 alert set.
+- `phase4-slo-error-budget.md`
+  - Formal SLO/SLI targets, error-budget policy, and burn-rate response rules for the primary order journey.
+- `runbook-aws-dev-argocd-missing-resources.md`
+  - Recovery path for `OutOfSync/Missing` Argo child apps after rebuild.
+- `runbook-async-processing-failures.md`
+  - Triage and mitigation for async `orders -> worker -> notifications` failure modes.
+- `drills/2026-03-04-gameday-async-failure.md`
+  - Completed GameDay Lite drill record with timeline, signals, actions, and outcomes.
 
 ## Notes
 
@@ -27,3 +35,4 @@ SLOs, error budgets, incident response, postmortems, and runbooks.
   - `../adrs/002-adr-idempotency-producer-consumer.md`
 - Current readiness is summarized in:
   - `../memos/2026-03-02-aws-dev-exit-gate.md`
+  - `../memos/2026-03-04-post-rebuild-missing-apps-crd-root-cause.md`
