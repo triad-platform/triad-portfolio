@@ -65,27 +65,33 @@ If the public order path stays impaired long enough to threaten the availability
 
 ## Drill Injection Path (GitOps-Aware)
 
-For a controlled drill, prefer a reversible sync-path failure:
+For a controlled drill, use a reversible Git-driven workload overlay rather than fighting Argo with cluster-side patches.
 
-1. temporarily disable Argo self-heal on `pulsecart-workloads`
-2. scale `orders` to zero
-3. observe alerting and metrics
-4. restore `orders`
-5. re-enable self-heal and refresh the app
+The current drill overlay lives at:
 
-Suggested commands:
+1. `/Users/lseino/triad-platform/triad-kubernetes-platform/workloads/pulsecart/drills/gateway-timeout`
+
+That overlay reuses the normal dev workload base and forces `orders` replicas to `0`.
+
+Activation path:
+
+1. update `apps/workloads/pulsecart-workloads.yaml`
+2. change `spec.source.path` from `workloads/pulsecart/dev` to `workloads/pulsecart/drills/gateway-timeout`
+3. commit and push to `develop`
+4. wait for Argo to reconcile
+
+Restore path:
+
+1. revert `apps/workloads/pulsecart-workloads.yaml` back to `workloads/pulsecart/dev`
+2. commit and push to `develop`
+3. confirm `pulsecart-workloads` returns to `Synced` / `Healthy`
+
+Suggested verification:
 
 ```bash
-kubectl patch app pulsecart-workloads -n argocd --type merge -p '{"spec":{"syncPolicy":{"automated":{"prune":true,"selfHeal":false}}}}'
-kubectl scale deployment/orders -n pulsecart --replicas=0
-```
-
-Restore:
-
-```bash
-kubectl scale deployment/orders -n pulsecart --replicas=2
-kubectl patch app pulsecart-workloads -n argocd --type merge -p '{"spec":{"syncPolicy":{"automated":{"prune":true,"selfHeal":true}}}}'
-kubectl annotate app pulsecart-workloads -n argocd argocd.argoproj.io/refresh=hard --overwrite
+kubectl get app pulsecart-workloads -n argocd
+kubectl get deploy orders -n pulsecart
+kubectl get pods -n pulsecart
 ```
 
 ## Exit Criteria
