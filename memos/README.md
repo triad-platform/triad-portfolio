@@ -14,3 +14,5 @@ Short, executive-friendly technical memos.
   - First-principles incident record for `OutOfSync/Missing` Argo child apps caused by missing `external-secrets` CRDs and the tested recovery sequence.
 - `2026-03-14-aws-rebuild-bootstrap-gaps.md`
   - Record of the successful AWS rebuild after cost teardown, the `external-secrets` CRD bootstrap gap, the Kyverno-enforced workload label failure, and the final recovery path.
+- `2026-03-14-aws-admission-validation.md`
+  - Record of the live EKS admission-policy validation showing deny for unapproved registry and missing labels, and allow for the signed-image path derived from the live GitOps overlay.
