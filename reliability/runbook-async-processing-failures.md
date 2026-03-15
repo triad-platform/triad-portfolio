@@ -8,6 +8,8 @@ Scope:
 ## Trigger Signals
 
 1. `PulseCartWorkerProcessingErrors` alert fires.
+2. `PulseCartOrdersOutboxRelayErrors` alert fires.
+3. `PulseCartOrdersOutboxBacklog` alert fires.
 2. Worker error metrics increase:
    - `triad_worker_messages_errors_total`
    - `triad_worker_notifier_errors_total`
@@ -32,27 +34,32 @@ kubectl logs -n pulsecart deployment/orders --tail=120
 kubectl logs -n pulsecart deployment/worker --tail=120
 ```
 
-3. Confirm metrics direction (errors vs processed).
+3. Confirm metrics direction (orders outbox backlog vs worker processing).
 
 ```bash
-kubectl port-forward -n pulsecart svc/worker 9091:9091
-curl -sf http://localhost:9091/metrics | rg 'messages_processed_total|messages_errors_total|notifier_errors_total|idempotency_errors_total'
+kubectl port-forward -n pulsecart svc/orders 18081:8081
+kubectl port-forward -n pulsecart svc/worker 19091:9091
+curl -sf http://localhost:18081/metrics | rg 'outbox_pending_events|outbox_events_published_total|outbox_events_failed_total'
+curl -sf http://localhost:19091/metrics | rg 'messages_processed_total|messages_errors_total|notifier_errors_total|idempotency_errors_total'
 ```
 
 ## Immediate Mitigation
 
 1. Restart failed worker/notifications pods.
-2. Validate `NOTIFICATIONS_URL`, `NATS_URL`, `REDIS_ADDR` env values in workload manifests.
-3. Re-run cloud smoke once metrics stop worsening.
+2. If outbox backlog is growing, inspect the `orders` logs before restarting anything else.
+3. Validate `NOTIFICATIONS_URL`, `NATS_URL`, `REDIS_ADDR` env values in workload manifests.
+4. Re-run cloud smoke once backlog and worker error metrics stop worsening.
 
 ## Deep Fix Guidance
 
-1. If notifier errors dominate, inspect notifications service response path and timeouts.
-2. If idempotency errors dominate, inspect Redis connectivity/auth and duplicate-key logic.
-3. If processing errors dominate with malformed payloads, inspect event schema/contract drift.
+1. If outbox relay errors dominate, inspect NATS connectivity, relay logs, and whether pending events are draining after recovery.
+2. If notifier errors dominate, inspect notifications service response path and timeouts.
+3. If idempotency errors dominate, inspect Redis connectivity/auth and duplicate-key logic.
+4. If processing errors dominate with malformed payloads, inspect event schema/contract drift.
 
 ## Exit Criteria
 
-1. Worker error rate returns to baseline.
-2. Async cloud smoke passes.
-3. No sustained increase in duplicate side effects.
+1. `triad_orders_outbox_pending_events` returns to `0`.
+2. Worker error rate returns to baseline.
+3. Async cloud smoke passes.
+4. No sustained increase in duplicate side effects.
