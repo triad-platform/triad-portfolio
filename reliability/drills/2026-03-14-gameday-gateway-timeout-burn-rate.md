@@ -2,7 +2,7 @@
 
 Date: 2026-03-14
 Environment: AWS dev (`triad-aws-eks-dev`)
-Status: Planned / Ready To Execute
+Status: Completed
 
 ## Drill Objective
 
@@ -21,10 +21,12 @@ Inject or simulate a condition that causes the gateway to accumulate order-forwa
 
 ## Primary Signals
 
-1. `PulseCartGatewayTimeouts`
-2. `PulseCartGatewayHigh5xxRate`
-3. `api-gateway` logs showing upstream timeout behavior
-4. `orders` health, readiness, and latency metrics
+1. `PulseCartOrdersUnavailable`
+2. `PulseCartGatewayUpstreamFailureRatio`
+3. `PulseCartGatewayTimeouts`
+4. `PulseCartGatewayHigh5xxRate`
+5. `api-gateway` logs showing upstream timeout or upstream request failure behavior
+6. `orders` health, readiness, and latency metrics
 
 ## SLO / Error-Budget Mapping
 
@@ -38,12 +40,12 @@ This drill specifically exercises:
 
 Choose one controlled failure mode:
 
-1. pause Argo self-heal for `pulsecart-workloads`, then scale `orders` to zero temporarily
+1. switch the workload app to the Git-native drill overlay that sets `orders` replicas to `0`
 2. block `orders` readiness by introducing a bad dependency value in dev
 3. create an artificial latency spike in the `orders` path if a safe debug hook exists
 
 The preferred drill is the simplest one that creates observable gateway timeout behavior without introducing unrelated platform drift.
-For the current AWS dev baseline, the preferred first drill is the reversible `orders -> 0 replicas` path while Argo self-heal is temporarily disabled.
+For the current AWS dev baseline, the preferred first drill is the reversible Git-driven overlay that moves `orders` to `0` replicas.
 
 ## Execution Checklist
 
@@ -57,6 +59,53 @@ For the current AWS dev baseline, the preferred first drill is the reversible `o
 5. Follow `runbook-gateway-timeout-burn-rate.md`.
 6. Restore service.
 7. Confirm the public path and metrics recover.
+
+## Actual Execution Summary
+
+The drill was executed by switching the Argo workload app from:
+
+1. `workloads/pulsecart/dev`
+
+to:
+
+1. `workloads/pulsecart/drills/gateway-timeout`
+
+Result:
+
+1. Argo reconciled the drill overlay successfully.
+2. `orders` scaled to `0` replicas and remained unavailable.
+3. `api-gateway` remained healthy at its own `/healthz` endpoint.
+4. Public `POST /v1/orders` requests returned `502 upstream request failed`.
+5. The workload path was restored by reverting the Argo app source path back to `workloads/pulsecart/dev`.
+
+## What Was Proven
+
+1. The Git-native drill path works and respects the app-of-apps model.
+2. User-path failure can exist while component liveness remains green.
+3. The public synchronous path is visibly impaired when `orders` is absent.
+4. `PulseCartOrdersUnavailable` was validated end to end after Prometheus rule reload: rule evaluation, Alertmanager routing, SNS delivery, and operator email receipt all worked.
+
+## Gaps Exposed
+
+1. Prometheus rule updates do not currently self-reload after Argo updates the rules ConfigMap.
+2. Local metric capture during the drill was awkward enough that the operator path should be tightened further.
+3. `PulseCartGatewayUpstreamFailureRatio` was intentionally not treated as a closure blocker for this drill and remains optional follow-up validation.
+
+## Current Activation Mechanism
+
+The drill should be activated by changing:
+
+1. `/Users/lseino/triad-platform/triad-kubernetes-platform/apps/workloads/pulsecart-workloads.yaml`
+
+from:
+
+1. `workloads/pulsecart/dev`
+
+to:
+
+1. `workloads/pulsecart/drills/gateway-timeout`
+
+Then commit and push to `develop`, let Argo reconcile, observe the failure, and revert the same file back to the normal path.
 
 ## Evidence To Capture
 
@@ -76,6 +125,6 @@ For the current AWS dev baseline, the preferred first drill is the reversible `o
 
 ## Expected Follow-Up
 
-1. tighten timeout-specific runbook guidance if triage is ambiguous
-2. tune alert thresholds if noise or delay is obvious
-3. update the SLO narrative if burn-rate interpretation is unclear in practice
+1. Add automatic Prometheus config/rule reload so Argo-delivered rule changes become live without manual intervention.
+2. Improve the operator metric-capture path during drills.
+3. Revisit the gateway ratio signal only if stronger user-path degradation paging is still needed beyond the direct `orders` outage alert.

@@ -40,3 +40,4 @@ SLOs, error budgets, incident response, postmortems, and runbooks.
 - Current readiness is summarized in:
   - `../memos/2026-03-02-aws-dev-exit-gate.md`
   - `../memos/2026-03-04-post-rebuild-missing-apps-crd-root-cause.md`
+  - `../memos/2026-03-14-prometheus-rule-reload-gap.md`

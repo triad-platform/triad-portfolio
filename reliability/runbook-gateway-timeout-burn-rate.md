@@ -8,9 +8,12 @@ Scope:
 
 ## Trigger Signals
 
-1. `PulseCartGatewayTimeouts`
-2. `PulseCartGatewayHigh5xxRate`
-3. Public `POST /v1/orders` failures or very slow responses
+1. `PulseCartOrdersUnavailable`
+2. `PulseCartGatewayUpstreamFailureRatio`
+3. `PulseCartGatewayTimeouts`
+4. `PulseCartGatewayHigh5xxRate`
+5. Public `POST /v1/orders` failures or very slow responses
+6. `orders` Deployment unexpectedly at `0` available replicas during a drill or outage
 
 ## Triage Sequence
 
@@ -32,15 +35,21 @@ kubectl logs -n pulsecart deployment/orders --tail=200
 3. Check timeout and request metrics direction.
 
 ```bash
-kubectl port-forward -n pulsecart svc/api-gateway 8080:8080
-curl -sf http://localhost:8080/metrics | rg 'http_response_status_500_total|orders_forward_timeouts_total|http_request_duration'
+kubectl port-forward -n pulsecart svc/api-gateway 18080:8080
+curl -sf http://localhost:18080/metrics | rg 'http_response_status_500_total|orders_forward_errors_total|orders_forward_timeouts_total|orders_forward_requests_total|http_request_duration'
 ```
 
 4. Confirm whether `orders` is healthy or absent.
 
 ```bash
 kubectl get deploy,po,svc -n pulsecart | rg 'api-gateway|orders'
+kubectl get endpoints -n pulsecart orders -o yaml
 ```
+
+Operational note:
+
+1. In the March 14 drill, public `POST /v1/orders` returned `502 upstream request failed` while `api-gateway /healthz` still returned `200`.
+2. Treat public path failure as higher-signal than component liveness alone when judging user impact.
 
 ## Immediate Mitigation
 
@@ -65,32 +74,48 @@ If the public order path stays impaired long enough to threaten the availability
 
 ## Drill Injection Path (GitOps-Aware)
 
-For a controlled drill, prefer a reversible sync-path failure:
+For a controlled drill, use a reversible Git-driven workload overlay rather than fighting Argo with cluster-side patches.
 
-1. temporarily disable Argo self-heal on `pulsecart-workloads`
-2. scale `orders` to zero
-3. observe alerting and metrics
-4. restore `orders`
-5. re-enable self-heal and refresh the app
+The current drill overlay lives at:
 
-Suggested commands:
+1. `/Users/lseino/triad-platform/triad-kubernetes-platform/workloads/pulsecart/drills/gateway-timeout`
+
+That overlay reuses the normal dev workload base and forces `orders` replicas to `0`.
+
+Activation path:
+
+1. update `apps/workloads/pulsecart-workloads.yaml`
+2. change `spec.source.path` from `workloads/pulsecart/dev` to `workloads/pulsecart/drills/gateway-timeout`
+3. commit and push to `develop`
+4. wait for Argo to reconcile
+
+Restore path:
+
+1. revert `apps/workloads/pulsecart-workloads.yaml` back to `workloads/pulsecart/dev`
+2. commit and push to `develop`
+3. confirm `pulsecart-workloads` returns to `Synced` / `Healthy`
+
+Suggested verification:
 
 ```bash
-kubectl patch app pulsecart-workloads -n argocd --type merge -p '{"spec":{"syncPolicy":{"automated":{"prune":true,"selfHeal":false}}}}'
-kubectl scale deployment/orders -n pulsecart --replicas=0
-```
-
-Restore:
-
-```bash
-kubectl scale deployment/orders -n pulsecart --replicas=2
-kubectl patch app pulsecart-workloads -n argocd --type merge -p '{"spec":{"syncPolicy":{"automated":{"prune":true,"selfHeal":true}}}}'
-kubectl annotate app pulsecart-workloads -n argocd argocd.argoproj.io/refresh=hard --overwrite
+kubectl get app pulsecart-workloads -n argocd
+kubectl get deploy orders -n pulsecart
+kubectl get pods -n pulsecart
 ```
 
 ## Exit Criteria
 
-1. `PulseCartGatewayTimeouts` returns to baseline
-2. public health and order-create path recover
-3. `pulsecart-workloads` returns to `Synced` / `Healthy`
-4. drill notes capture detect, mitigate, and recover timestamps
+1. `PulseCartOrdersUnavailable` clears
+2. `PulseCartGatewayUpstreamFailureRatio` returns to baseline
+3. `PulseCartGatewayTimeouts` returns to baseline
+4. public health and order-create path recover
+5. `pulsecart-workloads` returns to `Synced` / `Healthy`
+6. drill notes capture detect, mitigate, and recover timestamps
+
+## Follow-Up Gap
+
+The March 14 execution showed two things:
+
+1. an `orders` outage produced clear public `502` responses
+2. `PulseCartOrdersUnavailable` is now validated end to end through Prometheus, Alertmanager, SNS, and email after a manual Prometheus reload
+3. Prometheus rule updates still need an automatic reload path before this observability workflow is considered fully hardened
