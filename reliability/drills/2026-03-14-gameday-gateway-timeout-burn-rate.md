@@ -2,7 +2,7 @@
 
 Date: 2026-03-14
 Environment: AWS dev (`triad-aws-eks-dev`)
-Status: Planned / Ready To Execute
+Status: Completed
 
 ## Drill Objective
 
@@ -58,6 +58,36 @@ For the current AWS dev baseline, the preferred first drill is the reversible Gi
 6. Restore service.
 7. Confirm the public path and metrics recover.
 
+## Actual Execution Summary
+
+The drill was executed by switching the Argo workload app from:
+
+1. `workloads/pulsecart/dev`
+
+to:
+
+1. `workloads/pulsecart/drills/gateway-timeout`
+
+Result:
+
+1. Argo reconciled the drill overlay successfully.
+2. `orders` scaled to `0` replicas and remained unavailable.
+3. `api-gateway` remained healthy at its own `/healthz` endpoint.
+4. Public `POST /v1/orders` requests returned `502 upstream request failed`.
+5. The workload path was restored by reverting the Argo app source path back to `workloads/pulsecart/dev`.
+
+## What Was Proven
+
+1. The Git-native drill path works and respects the app-of-apps model.
+2. User-path failure can exist while component liveness remains green.
+3. The public synchronous path is visibly impaired when `orders` is absent.
+
+## Gaps Exposed
+
+1. The current alert set did not clearly surface the outage the way expected during the drill.
+2. The present alert rules are weaker at detecting this exact `orders` unavailability case than the public endpoint behavior is.
+3. Local metric capture during the drill was awkward enough that the operator path should be tightened further.
+
 ## Current Activation Mechanism
 
 The drill should be activated by changing:
@@ -92,6 +122,6 @@ Then commit and push to `develop`, let Argo reconcile, observe the failure, and 
 
 ## Expected Follow-Up
 
-1. tighten timeout-specific runbook guidance if triage is ambiguous
-2. tune alert thresholds if noise or delay is obvious
-3. update the SLO narrative if burn-rate interpretation is unclear in practice
+1. Add or tighten alert coverage for `orders` unavailability and user-path failure.
+2. Improve the operator metric-capture path during drills.
+3. Update the SLO and alert interpretation narrative if burn-rate reasoning remains unclear in practice.

@@ -11,6 +11,7 @@ Scope:
 1. `PulseCartGatewayTimeouts`
 2. `PulseCartGatewayHigh5xxRate`
 3. Public `POST /v1/orders` failures or very slow responses
+4. `orders` Deployment unexpectedly at `0` available replicas during a drill or outage
 
 ## Triage Sequence
 
@@ -41,6 +42,11 @@ curl -sf http://localhost:8080/metrics | rg 'http_response_status_500_total|orde
 ```bash
 kubectl get deploy,po,svc -n pulsecart | rg 'api-gateway|orders'
 ```
+
+Operational note:
+
+1. In the March 14 drill, public `POST /v1/orders` returned `502 upstream request failed` while `api-gateway /healthz` still returned `200`.
+2. Treat public path failure as higher-signal than component liveness alone when judging user impact.
 
 ## Immediate Mitigation
 
@@ -100,3 +106,11 @@ kubectl get pods -n pulsecart
 2. public health and order-create path recover
 3. `pulsecart-workloads` returns to `Synced` / `Healthy`
 4. drill notes capture detect, mitigate, and recover timestamps
+
+## Follow-Up Gap
+
+The March 14 execution showed that current alert coverage should be revisited for this scenario:
+
+1. an `orders` outage produced clear public `502` responses
+2. the expected alert path was not strong enough to count as complete detection evidence
+3. alert rules and/or Prometheus expressions should be tightened before calling this scenario fully covered
