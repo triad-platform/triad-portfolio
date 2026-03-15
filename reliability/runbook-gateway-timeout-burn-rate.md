@@ -114,8 +114,8 @@ kubectl get pods -n pulsecart
 
 ## Follow-Up Gap
 
-The March 14 execution showed that the original alert coverage was too weak for this scenario. The current baseline now adds direct `orders` target-unavailable and gateway upstream-failure-ratio signals. The next validation run should confirm they actually page the operator path as intended:
+The March 14 execution showed two things:
 
 1. an `orders` outage produced clear public `502` responses
-2. those new alerts must now be re-validated against the same drill
-3. if they still lag, thresholds and scrape-based assumptions should be adjusted again before calling this scenario fully covered
+2. `PulseCartOrdersUnavailable` is now validated end to end through Prometheus, Alertmanager, SNS, and email after a manual Prometheus reload
+3. Prometheus rule updates still need an automatic reload path before this observability workflow is considered fully hardened

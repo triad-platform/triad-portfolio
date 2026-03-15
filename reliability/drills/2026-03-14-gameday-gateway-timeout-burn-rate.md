@@ -83,12 +83,13 @@ Result:
 1. The Git-native drill path works and respects the app-of-apps model.
 2. User-path failure can exist while component liveness remains green.
 3. The public synchronous path is visibly impaired when `orders` is absent.
+4. `PulseCartOrdersUnavailable` was validated end to end after Prometheus rule reload: rule evaluation, Alertmanager routing, SNS delivery, and operator email receipt all worked.
 
 ## Gaps Exposed
 
-1. The current alert set did not clearly surface the outage the way expected during the drill.
-2. The present alert rules are weaker at detecting this exact `orders` unavailability case than the public endpoint behavior is.
-3. Local metric capture during the drill was awkward enough that the operator path should be tightened further.
+1. Prometheus rule updates do not currently self-reload after Argo updates the rules ConfigMap.
+2. Local metric capture during the drill was awkward enough that the operator path should be tightened further.
+3. `PulseCartGatewayUpstreamFailureRatio` was intentionally not treated as a closure blocker for this drill and remains optional follow-up validation.
 
 ## Current Activation Mechanism
 
@@ -124,6 +125,6 @@ Then commit and push to `develop`, let Argo reconcile, observe the failure, and 
 
 ## Expected Follow-Up
 
-1. Re-run the same drill against the strengthened alert baseline.
+1. Add automatic Prometheus config/rule reload so Argo-delivered rule changes become live without manual intervention.
 2. Improve the operator metric-capture path during drills.
-3. Update the SLO and alert interpretation narrative if burn-rate reasoning remains unclear in practice.
+3. Revisit the gateway ratio signal only if stronger user-path degradation paging is still needed beyond the direct `orders` outage alert.
