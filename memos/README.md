@@ -20,3 +20,5 @@ Short, executive-friendly technical memos.
   - Incident-style record of the Prometheus rule reload gap discovered during the AWS reliability drill, the troubleshooting commands used, the root cause, and the permanent sidecar-based fix.
 - `2026-03-15-outbox-delivery-gap.md`
   - Incident-style record of the first transactional outbox validation failure, the troubleshooting commands used, the root cause in NATS publish semantics, and the flush-based fix.
+- `2026-03-15-pinned-supply-chain-baseline.md`
+  - Record of the first successful AWS supply-chain run after pinning `triad-app` to a reviewed `triad-ci-security` reusable-action commit.
