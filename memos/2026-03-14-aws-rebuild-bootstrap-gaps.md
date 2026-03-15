@@ -4,12 +4,20 @@
 
 The AWS EKS dev environment was intentionally torn down to reduce cost, then rebuilt through the normal Terraform plus ArgoCD path on March 14, 2026.
 
-The rebuild succeeded and the cluster returned to a healthy known-good state, but two bootstrap gaps were exposed:
+The first rebuild attempt exposed two bootstrap gaps:
 
 1. `external-secrets` CRDs were not fully available after the first Argo sync on a blank cluster.
 2. Kyverno correctly blocked PulseCart Deployments because the app base was missing required workload labels on pod templates.
 
 Neither issue required relaxing policy. Both were resolved by bringing the bootstrap path and app manifests into alignment with the intended controls.
+
+After those fixes were committed, a follow-up teardown and rebuild validated the intended operator contract:
+
+1. re-apply the EKS Terraform stack
+2. refresh kubeconfig
+3. run `bootstrap-argocd.sh`
+
+That follow-up run converged to healthy platform and workload state without the manual `external-secrets` CRD recovery step.
 
 ## What Happened
 
@@ -73,16 +81,18 @@ the result was:
 
 ## What This Proves
 
-The AWS dev environment is reproducible enough to survive intentional cost teardown and come back through the normal repo-driven flow.
+The AWS dev environment is now reproducible enough to survive intentional cost teardown and come back through the normal repo-driven flow using:
 
-It still does **not** prove a zero-touch bootstrap. The remaining bootstrap boundary is now much clearer:
+1. Terraform apply for the EKS layer
+2. kubeconfig refresh
+3. ArgoCD bootstrap
 
-1. CRD-producing apps must be modeled more explicitly
-2. downstream apps must not depend on chart-side CRD timing
-3. admission policy must be treated as a first-class contract for app manifests
+That is a meaningful recovery milestone for the AWS reference platform.
+
+It still does **not** prove zero-touch production readiness. It does prove that the current dev-grade recovery contract is now coherent and repo-driven.
 
 ## Immediate Follow-Up
 
-1. Move bootstrap-critical CRDs into explicit prereq resources or apps instead of relying on Helm CRD install timing.
+1. Keep bootstrap-critical CRDs as explicit prereq resources or apps rather than relying on Helm CRD install timing.
 2. Keep the Kyverno policy in `Enforce` mode and treat the label fix as the correct long-term behavior, not a one-off exception.
 3. Continue AWS hardening before the next AKS/GKE workload parity pass.
