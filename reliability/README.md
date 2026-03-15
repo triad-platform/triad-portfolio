@@ -16,8 +16,12 @@ SLOs, error budgets, incident response, postmortems, and runbooks.
   - Recovery path for `OutOfSync/Missing` Argo child apps after rebuild.
 - `runbook-async-processing-failures.md`
   - Triage and mitigation for async `orders -> worker -> notifications` failure modes.
+- `runbook-gateway-timeout-burn-rate.md`
+  - Triage and mitigation for synchronous `api-gateway -> orders` timeout conditions and SLO/error-budget pressure.
 - `drills/2026-03-04-gameday-async-failure.md`
   - Completed GameDay Lite drill record with timeline, signals, actions, and outcomes.
+- `drills/2026-03-14-gameday-gateway-timeout-burn-rate.md`
+  - Planned next reliability drill for synchronous-path timeout detection, burn-rate reasoning, and mitigation on the AWS dev baseline.
 
 ## Notes
 
