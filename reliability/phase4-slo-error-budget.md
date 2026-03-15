@@ -94,10 +94,12 @@ Burn-rate response policy:
 
 Mapped initial alerts (see `alerts/pulsecart-phase1-alerts.yml`):
 
-1. `PulseCartGatewayHigh5xxRate`
-2. `PulseCartGatewayTimeouts`
-3. `PulseCartWorkerProcessingErrors`
-4. `PulseCartWorkerDuplicateSpike` (guardrail signal, not direct SLO burn)
+1. `PulseCartOrdersUnavailable`
+2. `PulseCartGatewayUpstreamFailureRatio`
+3. `PulseCartGatewayHigh5xxRate`
+4. `PulseCartGatewayTimeouts`
+5. `PulseCartWorkerProcessingErrors`
+6. `PulseCartWorkerDuplicateSpike` (guardrail signal, not direct SLO burn)
 
 ## Dashboards
 

@@ -8,10 +8,12 @@ Scope:
 
 ## Trigger Signals
 
-1. `PulseCartGatewayTimeouts`
-2. `PulseCartGatewayHigh5xxRate`
-3. Public `POST /v1/orders` failures or very slow responses
-4. `orders` Deployment unexpectedly at `0` available replicas during a drill or outage
+1. `PulseCartOrdersUnavailable`
+2. `PulseCartGatewayUpstreamFailureRatio`
+3. `PulseCartGatewayTimeouts`
+4. `PulseCartGatewayHigh5xxRate`
+5. Public `POST /v1/orders` failures or very slow responses
+6. `orders` Deployment unexpectedly at `0` available replicas during a drill or outage
 
 ## Triage Sequence
 
@@ -33,14 +35,15 @@ kubectl logs -n pulsecart deployment/orders --tail=200
 3. Check timeout and request metrics direction.
 
 ```bash
-kubectl port-forward -n pulsecart svc/api-gateway 8080:8080
-curl -sf http://localhost:8080/metrics | rg 'http_response_status_500_total|orders_forward_timeouts_total|http_request_duration'
+kubectl port-forward -n pulsecart svc/api-gateway 18080:8080
+curl -sf http://localhost:18080/metrics | rg 'http_response_status_500_total|orders_forward_errors_total|orders_forward_timeouts_total|orders_forward_requests_total|http_request_duration'
 ```
 
 4. Confirm whether `orders` is healthy or absent.
 
 ```bash
 kubectl get deploy,po,svc -n pulsecart | rg 'api-gateway|orders'
+kubectl get endpoints -n pulsecart orders -o yaml
 ```
 
 Operational note:
@@ -102,15 +105,17 @@ kubectl get pods -n pulsecart
 
 ## Exit Criteria
 
-1. `PulseCartGatewayTimeouts` returns to baseline
-2. public health and order-create path recover
-3. `pulsecart-workloads` returns to `Synced` / `Healthy`
-4. drill notes capture detect, mitigate, and recover timestamps
+1. `PulseCartOrdersUnavailable` clears
+2. `PulseCartGatewayUpstreamFailureRatio` returns to baseline
+3. `PulseCartGatewayTimeouts` returns to baseline
+4. public health and order-create path recover
+5. `pulsecart-workloads` returns to `Synced` / `Healthy`
+6. drill notes capture detect, mitigate, and recover timestamps
 
 ## Follow-Up Gap
 
-The March 14 execution showed that current alert coverage should be revisited for this scenario:
+The March 14 execution showed that the original alert coverage was too weak for this scenario. The current baseline now adds direct `orders` target-unavailable and gateway upstream-failure-ratio signals. The next validation run should confirm they actually page the operator path as intended:
 
 1. an `orders` outage produced clear public `502` responses
-2. the expected alert path was not strong enough to count as complete detection evidence
-3. alert rules and/or Prometheus expressions should be tightened before calling this scenario fully covered
+2. those new alerts must now be re-validated against the same drill
+3. if they still lag, thresholds and scrape-based assumptions should be adjusted again before calling this scenario fully covered

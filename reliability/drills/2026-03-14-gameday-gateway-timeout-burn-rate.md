@@ -21,10 +21,12 @@ Inject or simulate a condition that causes the gateway to accumulate order-forwa
 
 ## Primary Signals
 
-1. `PulseCartGatewayTimeouts`
-2. `PulseCartGatewayHigh5xxRate`
-3. `api-gateway` logs showing upstream timeout behavior
-4. `orders` health, readiness, and latency metrics
+1. `PulseCartOrdersUnavailable`
+2. `PulseCartGatewayUpstreamFailureRatio`
+3. `PulseCartGatewayTimeouts`
+4. `PulseCartGatewayHigh5xxRate`
+5. `api-gateway` logs showing upstream timeout or upstream request failure behavior
+6. `orders` health, readiness, and latency metrics
 
 ## SLO / Error-Budget Mapping
 
@@ -122,6 +124,6 @@ Then commit and push to `develop`, let Argo reconcile, observe the failure, and 
 
 ## Expected Follow-Up
 
-1. Add or tighten alert coverage for `orders` unavailability and user-path failure.
+1. Re-run the same drill against the strengthened alert baseline.
 2. Improve the operator metric-capture path during drills.
 3. Update the SLO and alert interpretation narrative if burn-rate reasoning remains unclear in practice.
