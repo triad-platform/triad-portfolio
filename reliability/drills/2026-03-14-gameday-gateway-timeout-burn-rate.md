@@ -38,11 +38,12 @@ This drill specifically exercises:
 
 Choose one controlled failure mode:
 
-1. scale `orders` to zero temporarily
+1. pause Argo self-heal for `pulsecart-workloads`, then scale `orders` to zero temporarily
 2. block `orders` readiness by introducing a bad dependency value in dev
 3. create an artificial latency spike in the `orders` path if a safe debug hook exists
 
 The preferred drill is the simplest one that creates observable gateway timeout behavior without introducing unrelated platform drift.
+For the current AWS dev baseline, the preferred first drill is the reversible `orders -> 0 replicas` path while Argo self-heal is temporarily disabled.
 
 ## Execution Checklist
 
@@ -53,7 +54,7 @@ The preferred drill is the simplest one that creates observable gateway timeout 
 2. Start timeline notes with exact timestamps.
 3. Introduce the failure.
 4. Watch alerting and dashboard signals.
-5. Follow the relevant runbook branch.
+5. Follow `runbook-gateway-timeout-burn-rate.md`.
 6. Restore service.
 7. Confirm the public path and metrics recover.
 
