@@ -18,3 +18,5 @@ Short, executive-friendly technical memos.
   - Record of the live EKS admission-policy validation showing deny for unapproved registry and missing labels, and allow for the signed-image path derived from the live GitOps overlay.
 - `2026-03-14-prometheus-rule-reload-gap.md`
   - Incident-style record of the Prometheus rule reload gap discovered during the AWS reliability drill, the troubleshooting commands used, the root cause, and the permanent sidecar-based fix.
+- `2026-03-15-outbox-delivery-gap.md`
+  - Incident-style record of the first transactional outbox validation failure, the troubleshooting commands used, the root cause in NATS publish semantics, and the flush-based fix.

@@ -39,8 +39,8 @@ kubectl logs -n pulsecart deployment/worker --tail=120
 ```bash
 kubectl port-forward -n pulsecart svc/orders 18081:8081
 kubectl port-forward -n pulsecart svc/worker 19091:9091
-curl -sf http://localhost:18081/metrics | rg 'outbox_pending_events|outbox_events_published_total|outbox_events_failed_total'
-curl -sf http://localhost:19091/metrics | rg 'messages_processed_total|messages_errors_total|notifier_errors_total|idempotency_errors_total'
+curl -sf http://localhost:18081/metrics | grep -E 'outbox_pending_events|outbox_events_published_total|outbox_events_failed_total'
+curl -sf http://localhost:19091/metrics | grep -E 'messages_processed_total|messages_errors_total|notifier_errors_total|idempotency_errors_total'
 ```
 
 ## Immediate Mitigation
@@ -56,6 +56,12 @@ curl -sf http://localhost:19091/metrics | rg 'messages_processed_total|messages_
 2. If notifier errors dominate, inspect notifications service response path and timeouts.
 3. If idempotency errors dominate, inspect Redis connectivity/auth and duplicate-key logic.
 4. If processing errors dominate with malformed payloads, inspect event schema/contract drift.
+
+Troubleshooting note from the March 15 validation:
+
+1. if order create continues returning `201` while NATS is down but `triad_orders_outbox_pending_events` stays at `0`, suspect delivery-confirmation logic in the relay rather than Prometheus or Alertmanager
+2. the first implementation incorrectly treated `nats.Conn.Publish()` success as broker delivery
+3. the permanent fix requires a successful NATS flush before the outbox row is marked published
 
 ## Exit Criteria
 
