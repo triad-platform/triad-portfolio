@@ -24,3 +24,5 @@ Short, executive-friendly technical memos.
   - Record of the first successful AWS supply-chain run after pinning `triad-app` to a reviewed `triad-ci-security` reusable-action commit.
 - `2026-03-15-aws-dev-maturity-gate.md`
   - Defines the AWS dev exit gate for moving from ad hoc hardening into a more mature platform baseline.
+- `2026-03-15-aws-roadmap-to-multicluster.md`
+  - Defines why Triad should keep deepening AWS first and what must be true before multi-cluster AWS or broader multi-cloud work is justified.
