@@ -50,6 +50,29 @@ curl -sf http://localhost:19091/metrics | grep -E 'messages_processed_total|mess
 3. Validate `NOTIFICATIONS_URL`, `NATS_URL`, `REDIS_ADDR` env values in workload manifests.
 4. Re-run cloud smoke once backlog and worker error metrics stop worsening.
 
+## GitOps-Aware Drill Path
+
+Do not rely on direct `kubectl scale` against `messaging/triad-nats` if Argo self-heal is enabled.
+
+The current async dependency drill overlay lives at:
+
+1. `/Users/lseino/triad-platform/triad-kubernetes-platform/platform/nats/drills/unavailable`
+
+Activation path:
+
+1. update `apps/platform/nats.yaml`
+2. change `spec.source.path` from `platform/nats` to `platform/nats/drills/unavailable`
+3. commit and push to `develop`
+4. wait for Argo to reconcile `nats`
+5. verify `messaging/triad-nats` has no ready endpoints before sending test orders
+
+Restore path:
+
+1. revert `apps/platform/nats.yaml` back to `platform/nats`
+2. commit and push to `develop`
+3. confirm `nats` returns to `Synced` / `Healthy`
+4. confirm backlog drains after recovery
+
 ## Deep Fix Guidance
 
 1. If outbox relay errors dominate, inspect NATS connectivity, relay logs, and whether pending events are draining after recovery.
@@ -62,6 +85,7 @@ Troubleshooting note from the March 15 validation:
 1. if order create continues returning `201` while NATS is down but `triad_orders_outbox_pending_events` stays at `0`, suspect delivery-confirmation logic in the relay rather than Prometheus or Alertmanager
 2. the first implementation incorrectly treated `nats.Conn.Publish()` success as broker delivery
 3. the permanent fix requires a successful NATS flush before the outbox row is marked published
+4. later validation also showed that direct runtime scale-down of `triad-nats` was not a valid drill path under Argo self-heal because the platform app restored the dependency automatically
 
 ## Exit Criteria
 
