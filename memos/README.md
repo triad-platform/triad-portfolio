@@ -30,3 +30,5 @@ Short, executive-friendly technical memos.
   - Defines what the AWS baseline already proves in dev, what would need a staging-grade upgrade, and what remains outside a production-shaped claim.
 - `2026-03-15-aws-dev-to-staging-contract.md`
   - Defines what must stay the same and what must become stricter before the AWS reference model deserves a real staging environment.
+- `2026-03-15-aws-staging-promotion-and-rollback-model.md`
+  - Defines the intended GitOps promotion and rollback discipline that would make a future AWS staging environment meaningful.
