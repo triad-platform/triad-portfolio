@@ -32,3 +32,5 @@ Short, executive-friendly technical memos.
   - Defines what must stay the same and what must become stricter before the AWS reference model deserves a real staging environment.
 - `2026-03-15-aws-staging-promotion-and-rollback-model.md`
   - Defines the intended GitOps promotion and rollback discipline that would make a future AWS staging environment meaningful.
+- `2026-03-15-aws-staging-readiness-and-input-contract.md`
+  - Records the readiness checklist and promotion-input rules that turn the staging scaffold into an operator-facing Stage B workflow.
