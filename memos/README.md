@@ -20,3 +20,15 @@ Short, executive-friendly technical memos.
   - Incident-style record of the Prometheus rule reload gap discovered during the AWS reliability drill, the troubleshooting commands used, the root cause, and the permanent sidecar-based fix.
 - `2026-03-15-outbox-delivery-gap.md`
   - Incident-style record of the first transactional outbox validation failure, the troubleshooting commands used, the root cause in NATS publish semantics, and the flush-based fix.
+- `2026-03-15-pinned-supply-chain-baseline.md`
+  - Record of the first successful AWS supply-chain run after pinning `triad-app` to a reviewed `triad-ci-security` reusable-action commit.
+- `2026-03-15-aws-dev-maturity-gate.md`
+  - Defines the AWS dev exit gate for moving from ad hoc hardening into a more mature platform baseline.
+- `2026-03-15-aws-roadmap-to-multicluster.md`
+  - Defines why Triad should keep deepening AWS first and what must be true before multi-cluster AWS or broader multi-cloud work is justified.
+- `2026-03-15-aws-environment-readiness-scorecard.md`
+  - Defines what the AWS baseline already proves in dev, what would need a staging-grade upgrade, and what remains outside a production-shaped claim.
+- `2026-03-15-aws-dev-to-staging-contract.md`
+  - Defines what must stay the same and what must become stricter before the AWS reference model deserves a real staging environment.
+- `2026-03-15-aws-staging-promotion-and-rollback-model.md`
+  - Defines the intended GitOps promotion and rollback discipline that would make a future AWS staging environment meaningful.

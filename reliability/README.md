@@ -22,6 +22,8 @@ SLOs, error budgets, incident response, postmortems, and runbooks.
   - Completed GameDay Lite drill record with timeline, signals, actions, and outcomes.
 - `drills/2026-03-14-gameday-gateway-timeout-burn-rate.md`
   - Planned next reliability drill for synchronous-path timeout detection, burn-rate reasoning, and mitigation on the AWS dev baseline.
+- `drills/2026-03-15-gameday-async-nats-unavailable.md`
+  - Completed Git-native async dependency drill showing orders acceptance, outbox backlog growth, and relay-failure signals while the real NATS runtime is unavailable.
 
 ## Notes
 
@@ -41,3 +43,4 @@ SLOs, error budgets, incident response, postmortems, and runbooks.
   - `../memos/2026-03-02-aws-dev-exit-gate.md`
   - `../memos/2026-03-04-post-rebuild-missing-apps-crd-root-cause.md`
   - `../memos/2026-03-14-prometheus-rule-reload-gap.md`
+  - `../memos/2026-03-15-aws-dev-maturity-gate.md`
