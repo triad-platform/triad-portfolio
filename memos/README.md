@@ -28,3 +28,5 @@ Short, executive-friendly technical memos.
   - Defines why Triad should keep deepening AWS first and what must be true before multi-cluster AWS or broader multi-cloud work is justified.
 - `2026-03-15-aws-environment-readiness-scorecard.md`
   - Defines what the AWS baseline already proves in dev, what would need a staging-grade upgrade, and what remains outside a production-shaped claim.
+- `2026-03-15-aws-dev-to-staging-contract.md`
+  - Defines what must stay the same and what must become stricter before the AWS reference model deserves a real staging environment.
