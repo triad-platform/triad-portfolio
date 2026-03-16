@@ -47,11 +47,14 @@ The AWS reference path now already proves:
 
 The remaining work is much narrower than before.
 
-The main open item is:
+The main remaining work is no longer basic runtime proof. The main remaining work is turning that proven AWS baseline into a stronger environment model.
 
-1. cleanly closing the async dependency validation path against the real live NATS runtime target and recording that result as reliability evidence
+The next useful gap is:
 
-That is a better remaining gap than earlier bootstrap or secret-boundary confusion, because it is now focused on an actual reliability behavior rather than an architecture misunderstanding.
+1. defining what becomes stricter between dev and staging
+2. making promotion and rollback expectations explicit before any staging rollout
+
+That is a better remaining gap than earlier bootstrap, secret-boundary, or async-dependency confusion because the core operator and reliability path is now already proven.
 
 ## Why This Improves The Project
 
@@ -68,6 +71,6 @@ Use the AWS dev maturity exit gate as the bar for the next maturity pass.
 
 The next best implementation step is:
 
-1. finish the async dependency validation on `messaging/triad-nats`
-2. record the result as a formal reliability artifact
-3. then decide whether AWS dev is ready to be treated as the clean baseline for the next multi-cloud workload phase
+1. define the dev-to-staging environment contract
+2. define the staging GitOps promotion and rollback model
+3. then decide what would actually justify stronger environment boundaries or later topology growth
