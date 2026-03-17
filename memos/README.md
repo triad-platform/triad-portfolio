@@ -34,3 +34,5 @@ Short, executive-friendly technical memos.
   - Defines the intended GitOps promotion and rollback discipline that would make a future AWS staging environment meaningful.
 - `2026-03-15-aws-staging-readiness-and-input-contract.md`
   - Records the readiness checklist and promotion-input rules that turn the staging scaffold into an operator-facing Stage B workflow.
+- `2026-03-16-gateway-api-before-rollouts.md`
+  - Records the decision to evaluate Gateway API through a staging-only scaffold before adopting Argo Rollouts.
