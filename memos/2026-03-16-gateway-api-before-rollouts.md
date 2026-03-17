@@ -12,6 +12,10 @@ The chosen sequence is:
 2. introduce a staging-only Gateway API evaluation scaffold
 3. defer Argo Rollouts until staging promotion and rollback are already real and trusted
 
+Preferred controller path:
+
+1. Envoy Gateway
+
 ## Why
 
 Gateway API improves the platform in ways that fit the current maturity stage:
@@ -34,7 +38,8 @@ The platform repo now includes:
 
 1. a non-live Gateway API evaluation overlay for staging
 2. a non-live Argo app scaffold for that overlay
-3. a runbook describing what must still be chosen before activation
+3. a non-live Envoy Gateway platform app scaffold
+4. a runbook describing what must still be chosen before activation
 
 This is the right kind of progress:
 
