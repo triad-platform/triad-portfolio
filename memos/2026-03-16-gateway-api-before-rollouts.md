@@ -41,6 +41,8 @@ The platform repo now includes:
 3. a non-live Envoy Gateway platform app scaffold
 4. a runbook describing what must still be chosen before activation
 
+The scaffold now uses stage-specific names so the evaluation lane reads like an environment boundary, not a shared platform experiment.
+
 This is the right kind of progress:
 
 1. modern platform learning
